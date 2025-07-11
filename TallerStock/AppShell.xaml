@@ -1,15 +1,20 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <Shell
     x:Class="TallerStock.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"  
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:TallerStock"
+    xmlns:pages="clr-namespace:TallerStock.Pages"  
     Shell.FlyoutBehavior="Disabled">
 
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
+        Title="Artículos"
+        ContentTemplate="{DataTemplate pages:ArticulosPage}" 
         Route="MainPage" />
 
+    <ShellContent
+        Title="Detalle"
+        ContentTemplate="{DataTemplate pages:ArticuloDetailPage}"
+        Route="ArticuloDetailPage"
+        IsVisible="False" />
 </Shell>
-
