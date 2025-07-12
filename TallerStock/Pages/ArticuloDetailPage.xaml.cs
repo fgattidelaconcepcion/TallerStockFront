@@ -58,22 +58,42 @@ namespace TallerStock.Pages
 
             if (_currentArticulo == null)
             {
-                var newArticulo = new Articulo
-                {
-                    Nombre = NombreEntry.Text,
-                    Stock = stock,
-                    Categoria = CategoriaEntry.Text
-                };
+                var existente = await _articuloService.GetArticuloPorNombreAsync(NombreEntry.Text);
 
-                var success = await _articuloService.AddArticuloAsync(newArticulo);
-                if (success)
+                if (existente != null)
                 {
-                    await DisplayAlert("Éxito", "Artículo agregado correctamente.", "OK");
-                    await Navigation.PopAsync();
+                    existente.Stock += stock;
+
+                    var success = await _articuloService.UpdateArticuloAsync(existente);
+                    if (success)
+                    {
+                        await DisplayAlert("Actualizado", $"Se aumentó el stock del artículo '{existente.Nombre}'.", "OK");
+                        await Navigation.PopAsync();
+                    }
+                    else
+                    {
+                        await DisplayAlert("Error", "No se pudo actualizar el stock del artículo existente.", "OK");
+                    }
                 }
                 else
                 {
-                    await DisplayAlert("Error", "No se pudo agregar el artículo.", "OK");
+                    var newArticulo = new Articulo
+                    {
+                        Nombre = NombreEntry.Text,
+                        Stock = stock,
+                        Categoria = CategoriaEntry.Text
+                    };
+
+                    var success = await _articuloService.AddArticuloAsync(newArticulo);
+                    if (success)
+                    {
+                        await DisplayAlert("Éxito", "Artículo agregado correctamente.", "OK");
+                        await Navigation.PopAsync();
+                    }
+                    else
+                    {
+                        await DisplayAlert("Error", "No se pudo agregar el artículo.", "OK");
+                    }
                 }
             }
             else
