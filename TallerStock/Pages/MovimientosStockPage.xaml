@@ -1,0 +1,39 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TallerStock.Pages.MovimientosStockPage"
+             Title="Movimientos de Stock"
+             BackgroundColor="Black">
+
+    <VerticalStackLayout Padding="15" Spacing="10">
+
+        <Label Text="Historial de Movimientos" FontSize="24" FontAttributes="Bold" TextColor="White" />
+
+        <CollectionView x:Name="MovimientosList" HeightRequest="300">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame BackgroundColor="#222" CornerRadius="8" Padding="10" Margin="5">
+                        <VerticalStackLayout>
+                            <Label Text="{Binding FechaMovimiento, StringFormat='{0:dd/MM/yyyy HH:mm}'}" TextColor="LightGray" FontSize="14"/>
+                            <Label Text="{Binding TipoMovimiento}" TextColor="White" FontAttributes="Bold" FontSize="16"/>
+                            <Label Text="{Binding Cantidad}" TextColor="White" FontSize="18"/>
+                            <Label Text="{Binding Comentario}" TextColor="Gray" FontSize="14" IsVisible="{Binding Comentario, Converter={StaticResource NullToBoolConverter}}" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Label Text="Registrar Movimiento" FontSize="22" FontAttributes="Bold" TextColor="White" Margin="0,10,0,0"/>
+
+        <Picker x:Name="TipoMovimientoPicker" Title="Tipo de movimiento" TextColor="White" BackgroundColor="#333" />
+
+        <Entry x:Name="CantidadEntry" Placeholder="Cantidad" Keyboard="Numeric"
+               TextColor="White" BackgroundColor="#333" />
+
+        <Entry x:Name="ComentarioEntry" Placeholder="Comentario (opcional)"
+               TextColor="White" BackgroundColor="#333" />
+
+        <Button Text="Registrar" Clicked="OnRegistrarMovimientoClicked" BackgroundColor="#006600" TextColor="White" />
+
+    </VerticalStackLayout>
+</ContentPage>

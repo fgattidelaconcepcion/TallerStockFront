@@ -1,0 +1,52 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TallerStock.Pages.ArticuloDetailPage"
+             Title="Detalle del Artículo"
+             BackgroundColor="Black">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="15" Padding="30">
+
+            <Label Text="Nombre:" FontAttributes="Bold" FontSize="22" TextColor="White" />
+            <Entry x:Name="NombreEntry" Placeholder="Ingresá el nombre del artículo"
+                   FontSize="20" TextColor="White" BackgroundColor="#333333" />
+
+            <Label Text="Stock:" FontAttributes="Bold" FontSize="22" TextColor="White" />
+            <Entry x:Name="StockEntry" Placeholder="Ingresá el stock" Keyboard="Numeric"
+                   FontSize="20" TextColor="White" BackgroundColor="#333333" />
+
+            <!-- BOTONES DE SUMA / RESTA -->
+            <HorizontalStackLayout Spacing="15"
+                                   Margin="0,5,0,15"
+                                   HorizontalOptions="Center">
+                <Button Text="−" FontSize="28" WidthRequest="60"
+                        BackgroundColor="#444" TextColor="White"
+                        Clicked="OnDisminuirStockClicked" />
+
+                <Button Text="+" FontSize="28" WidthRequest="60"
+                        BackgroundColor="#444" TextColor="White"
+                        Clicked="OnAumentarStockClicked" />
+            </HorizontalStackLayout>
+
+            <Label Text="Categoría:" FontAttributes="Bold" FontSize="22" TextColor="White" />
+            <Entry x:Name="CategoriaEntry" Placeholder="Ingresá la categoría"
+                   FontSize="20" TextColor="White" BackgroundColor="#333333" />
+
+            <Button Text="Guardar" Clicked="OnGuardarClicked"
+                    Margin="0,25,0,0" FontSize="20" BackgroundColor="#006600" TextColor="White" />
+
+            <Button Text="Cancelar" Clicked="OnCancelarClicked"
+                    BackgroundColor="Gray" FontSize="20" TextColor="White" />
+
+            <Button x:Name="EliminarButton"
+                    Text="Eliminar"
+                    Clicked="OnEliminarClicked"
+                    TextColor="White"
+                    BackgroundColor="#a83232"
+                    Margin="0,20,0,0"
+                    IsVisible="False"
+                    FontSize="20" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
