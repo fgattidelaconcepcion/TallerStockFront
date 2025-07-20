@@ -63,7 +63,6 @@ namespace TallerStock.Pages
                 if (existente != null)
                 {
                     existente.Stock += stock;
-
                     var success = await _articuloService.UpdateArticuloAsync(existente);
                     if (success)
                     {
@@ -123,14 +122,12 @@ namespace TallerStock.Pages
         private async void OnEliminarClicked(object sender, EventArgs e)
         {
             bool confirm = await DisplayAlert("Confirmar eliminación",
-                $"¿Querés eliminar el artículo '{_currentArticulo?.Nombre}'?", "Sí", "No");
+                $"¿Querés eliminar el artículo '{_currentArticulo?.Nombre}'?",
+                "Sí", "No");
 
-            if (!confirm)
-                return;
-
-            if (_currentArticulo != null)
+            if (confirm && _currentArticulo != null)
             {
-                var success = await _articuloService.DeleteArticuloAsync(_currentArticulo.Id);
+                bool success = await _articuloService.DeleteArticuloAsync(_currentArticulo.Id);
                 if (success)
                 {
                     await DisplayAlert("Éxito", "Artículo eliminado correctamente.", "OK");
@@ -145,42 +142,60 @@ namespace TallerStock.Pages
 
         private async void OnAumentarStockClicked(object sender, EventArgs e)
         {
-            if (int.TryParse(StockEntry.Text, out int stock))
+            if (_currentArticulo == null)
+                return;
+
+            var movimiento = new MovimientoStock
             {
-                stock++;
-                StockEntry.Text = stock.ToString();
-                await ActualizarStockAsync(stock);
+                ArticuloId = _currentArticulo.Id,
+                Cantidad = 1,
+                TipoMovimiento = "Ajuste",
+                Comentario = "Incremento rápido desde detalle"
+            };
+
+            bool success = await _articuloService.CrearMovimientoAsync(movimiento);
+            if (success)
+            {
+                await RefrescarStock();
+            }
+            else
+            {
+                await DisplayAlert("Error", "No se pudo incrementar el stock.", "OK");
             }
         }
 
         private async void OnDisminuirStockClicked(object sender, EventArgs e)
         {
-            if (int.TryParse(StockEntry.Text, out int stock))
+            if (_currentArticulo == null || _currentArticulo.Stock <= 0)
+                return;
+
+            var movimiento = new MovimientoStock
             {
-                if (stock > 0)
-                {
-                    stock--;
-                    StockEntry.Text = stock.ToString();
-                    await ActualizarStockAsync(stock);
-                }
-                else
-                {
-                    await DisplayAlert("Advertencia", "El stock no puede ser menor a 0.", "OK");
-                }
+                ArticuloId = _currentArticulo.Id,
+                Cantidad = -1,
+                TipoMovimiento = "Ajuste",
+                Comentario = "Disminución rápida desde detalle"
+            };
+
+            bool success = await _articuloService.CrearMovimientoAsync(movimiento);
+            if (success)
+            {
+                await RefrescarStock();
+            }
+            else
+            {
+                await DisplayAlert("Error", "No se pudo disminuir el stock.", "OK");
             }
         }
 
-        private async Task ActualizarStockAsync(int nuevoStock)
+        private async Task RefrescarStock()
         {
-            if (_currentArticulo == null)
-                return;
+            var articulos = await _articuloService.GetArticulosAsync();
+            _currentArticulo = articulos.Find(a => a.Id == _currentArticulo.Id);
 
-            _currentArticulo.Stock = nuevoStock;
-
-            var success = await _articuloService.UpdateArticuloAsync(_currentArticulo);
-            if (!success)
+            if (_currentArticulo != null)
             {
-                await DisplayAlert("Error", "No se pudo actualizar el stock.", "OK");
+                StockEntry.Text = _currentArticulo.Stock.ToString();
             }
         }
     }

@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using TallerStock.Models;
 using TallerStock.Services;
 using Microsoft.Maui.Controls;
@@ -8,22 +11,41 @@ namespace TallerStock.Pages
     public partial class ArticulosPage : ContentPage
     {
         private readonly ArticuloService _articuloService = new();
+        private List<Articulo> _allArticulos = new();
 
         public ArticulosPage()
         {
             InitializeComponent();
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
-            LoadArticulos();
+            await LoadArticulosAsync();
         }
 
-        private async void LoadArticulos()
+        private async Task LoadArticulosAsync()
         {
-            var articulos = await _articuloService.GetArticulosAsync();
-            ArticulosListView.ItemsSource = articulos;
+            _allArticulos = await _articuloService.GetArticulosAsync();
+            ArticulosListView.ItemsSource = _allArticulos;
+        }
+
+        private void OnSearchBarTextChanged(object sender, TextChangedEventArgs e)
+        {
+            string filtro = e.NewTextValue?.Trim().ToLower() ?? "";
+
+            if (string.IsNullOrEmpty(filtro))
+            {
+                ArticulosListView.ItemsSource = _allArticulos;
+            }
+            else
+            {
+                var filtrados = _allArticulos
+                    .Where(a => a.Nombre.ToLower().Contains(filtro) || a.Categoria.ToLower().Contains(filtro))
+                    .ToList();
+
+                ArticulosListView.ItemsSource = filtrados;
+            }
         }
 
         private async void OnAddArticuloClicked(object sender, EventArgs e)
@@ -44,15 +66,16 @@ namespace TallerStock.Pages
             if (sender is Button button && button.CommandParameter is Articulo articulo)
             {
                 bool confirm = await DisplayAlert("Confirmar eliminación",
-                                                  $"¿Querés eliminar el artículo '{articulo.Nombre}'?",
-                                                  "Sí", "No");
+                    $"¿Querés eliminar el artículo '{articulo.Nombre}'?",
+                    "Sí", "No");
+
                 if (confirm)
                 {
                     bool success = await _articuloService.DeleteArticuloAsync(articulo.Id);
                     if (success)
                     {
                         await DisplayAlert("Éxito", "Artículo eliminado correctamente.", "OK");
-                        LoadArticulos();
+                        await LoadArticulosAsync();
                     }
                     else
                     {
@@ -68,11 +91,18 @@ namespace TallerStock.Pages
             {
                 if (articulo.Stock > 0)
                 {
-                    articulo.Stock--;
-                    bool success = await _articuloService.UpdateArticuloAsync(articulo);
+                    var movimiento = new MovimientoStock
+                    {
+                        ArticuloId = articulo.Id,
+                        Cantidad = -1,
+                        TipoMovimiento = "Ajuste",
+                        Comentario = "Disminución rápida desde lista"
+                    };
+
+                    bool success = await _articuloService.CrearMovimientoAsync(movimiento);
                     if (success)
                     {
-                        LoadArticulos();
+                        await LoadArticulosAsync();
                     }
                     else
                     {
@@ -86,11 +116,18 @@ namespace TallerStock.Pages
         {
             if (sender is Button btn && btn.CommandParameter is Articulo articulo)
             {
-                articulo.Stock++;
-                bool success = await _articuloService.UpdateArticuloAsync(articulo);
+                var movimiento = new MovimientoStock
+                {
+                    ArticuloId = articulo.Id,
+                    Cantidad = 1,
+                    TipoMovimiento = "Ajuste",
+                    Comentario = "Incremento rápido desde lista"
+                };
+
+                bool success = await _articuloService.CrearMovimientoAsync(movimiento);
                 if (success)
                 {
-                    LoadArticulos();
+                    await LoadArticulosAsync();
                 }
                 else
                 {
