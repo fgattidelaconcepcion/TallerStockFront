@@ -85,55 +85,6 @@ namespace TallerStock.Pages
             }
         }
 
-        private async void OnDecreaseStockClicked(object sender, EventArgs e)
-        {
-            if (sender is Button btn && btn.CommandParameter is Articulo articulo)
-            {
-                if (articulo.Stock > 0)
-                {
-                    var movimiento = new MovimientoStock
-                    {
-                        ArticuloId = articulo.Id,
-                        Cantidad = -1,
-                        TipoMovimiento = "Ajuste",
-                        Comentario = "Disminución rápida desde lista"
-                    };
-
-                    bool success = await _articuloService.CrearMovimientoAsync(movimiento);
-                    if (success)
-                    {
-                        await LoadArticulosAsync();
-                    }
-                    else
-                    {
-                        await DisplayAlert("Error", "No se pudo actualizar el stock.", "OK");
-                    }
-                }
-            }
-        }
-
-        private async void OnIncreaseStockClicked(object sender, EventArgs e)
-        {
-            if (sender is Button btn && btn.CommandParameter is Articulo articulo)
-            {
-                var movimiento = new MovimientoStock
-                {
-                    ArticuloId = articulo.Id,
-                    Cantidad = 1,
-                    TipoMovimiento = "Ajuste",
-                    Comentario = "Incremento rápido desde lista"
-                };
-
-                bool success = await _articuloService.CrearMovimientoAsync(movimiento);
-                if (success)
-                {
-                    await LoadArticulosAsync();
-                }
-                else
-                {
-                    await DisplayAlert("Error", "No se pudo actualizar el stock.", "OK");
-                }
-            }
         }
     }
-}
+

@@ -1,4 +1,5 @@
 ﻿using System;
+using System;
 using System.Threading.Tasks;
 using TallerStock.Models;
 using TallerStock.Services;
@@ -30,7 +31,7 @@ namespace TallerStock.Pages
                 NombreEntry.Text = _currentArticulo.Nombre;
                 StockEntry.Text = _currentArticulo.Stock.ToString();
                 CategoriaEntry.Text = _currentArticulo.Categoria;
-
+                TamanoEntry.Text = _currentArticulo.Tamano;
                 EliminarButton.IsVisible = true;
             }
             else
@@ -44,65 +45,60 @@ namespace TallerStock.Pages
         {
             if (string.IsNullOrWhiteSpace(NombreEntry.Text) ||
                 string.IsNullOrWhiteSpace(StockEntry.Text) ||
-                string.IsNullOrWhiteSpace(CategoriaEntry.Text))
+                string.IsNullOrWhiteSpace(CategoriaEntry.Text) ||
+                string.IsNullOrWhiteSpace(TamanoEntry.Text))
             {
-                await DisplayAlert("Error", "Por favor, completá todos los campos.", "OK");
+                await DisplayAlert("Error", "Complete todos los campos.", "OK");
                 return;
             }
 
             if (!int.TryParse(StockEntry.Text, out int stock) || stock < 0)
             {
-                await DisplayAlert("Error", "El stock debe ser un número válido no negativo.", "OK");
+                await DisplayAlert("Error", "Stock inválido.", "OK");
                 return;
             }
 
             if (_currentArticulo == null)
             {
                 var existente = await _articuloService.GetArticuloPorNombreAsync(NombreEntry.Text);
-
                 if (existente != null)
                 {
                     existente.Stock += stock;
-                    var success = await _articuloService.UpdateArticuloAsync(existente);
-                    if (success)
+                    existente.Categoria = CategoriaEntry.Text;
+                    existente.Tamano = TamanoEntry.Text;
+                    if (await _articuloService.UpdateArticuloAsync(existente))
                     {
-                        await DisplayAlert("Actualizado", $"Se aumentó el stock del artículo '{existente.Nombre}'.", "OK");
+                        await DisplayAlert("Actualizado", "Se actualizó el stock y datos.", "OK");
                         await Navigation.PopAsync();
-                    }
-                    else
-                    {
-                        await DisplayAlert("Error", "No se pudo actualizar el stock del artículo existente.", "OK");
+                        return;
                     }
                 }
                 else
                 {
-                    var newArticulo = new Articulo
+                    _currentArticulo = new Articulo
                     {
                         Nombre = NombreEntry.Text,
                         Stock = stock,
-                        Categoria = CategoriaEntry.Text
+                        Categoria = CategoriaEntry.Text,
+                        Tamano = TamanoEntry.Text
                     };
-
-                    var success = await _articuloService.AddArticuloAsync(newArticulo);
-                    if (success)
+                    if (await _articuloService.AddArticuloAsync(_currentArticulo))
                     {
                         await DisplayAlert("Éxito", "Artículo agregado correctamente.", "OK");
                         await Navigation.PopAsync();
-                    }
-                    else
-                    {
-                        await DisplayAlert("Error", "No se pudo agregar el artículo.", "OK");
+                        return;
                     }
                 }
+                await DisplayAlert("Error", "No se pudo guardar el artículo.", "OK");
             }
             else
             {
                 _currentArticulo.Nombre = NombreEntry.Text;
                 _currentArticulo.Stock = stock;
                 _currentArticulo.Categoria = CategoriaEntry.Text;
+                _currentArticulo.Tamano = TamanoEntry.Text;
 
-                var success = await _articuloService.UpdateArticuloAsync(_currentArticulo);
-                if (success)
+                if (await _articuloService.UpdateArticuloAsync(_currentArticulo))
                 {
                     await DisplayAlert("Éxito", "Artículo actualizado correctamente.", "OK");
                     await Navigation.PopAsync();
@@ -122,81 +118,21 @@ namespace TallerStock.Pages
         private async void OnEliminarClicked(object sender, EventArgs e)
         {
             bool confirm = await DisplayAlert("Confirmar eliminación",
-                $"¿Querés eliminar el artículo '{_currentArticulo?.Nombre}'?",
-                "Sí", "No");
-
-            if (confirm && _currentArticulo != null)
+                                             $"Eliminar '{_currentArticulo?.Nombre}'?",
+                                             "Sí", "No");
+            if (confirm)
             {
-                bool success = await _articuloService.DeleteArticuloAsync(_currentArticulo.Id);
-                if (success)
+                if (await _articuloService.DeleteArticuloAsync(_currentArticulo.Id))
                 {
-                    await DisplayAlert("Éxito", "Artículo eliminado correctamente.", "OK");
+                    await DisplayAlert("Éxito", "Artículo eliminado.", "OK");
                     await Navigation.PopAsync();
                 }
                 else
                 {
-                    await DisplayAlert("Error", "No se pudo eliminar el artículo.", "OK");
+                    await DisplayAlert("Error", "No se pudo eliminar.", "OK");
                 }
             }
         }
 
-        private async void OnAumentarStockClicked(object sender, EventArgs e)
-        {
-            if (_currentArticulo == null)
-                return;
-
-            var movimiento = new MovimientoStock
-            {
-                ArticuloId = _currentArticulo.Id,
-                Cantidad = 1,
-                TipoMovimiento = "Ajuste",
-                Comentario = "Incremento rápido desde detalle"
-            };
-
-            bool success = await _articuloService.CrearMovimientoAsync(movimiento);
-            if (success)
-            {
-                await RefrescarStock();
-            }
-            else
-            {
-                await DisplayAlert("Error", "No se pudo incrementar el stock.", "OK");
-            }
-        }
-
-        private async void OnDisminuirStockClicked(object sender, EventArgs e)
-        {
-            if (_currentArticulo == null || _currentArticulo.Stock <= 0)
-                return;
-
-            var movimiento = new MovimientoStock
-            {
-                ArticuloId = _currentArticulo.Id,
-                Cantidad = -1,
-                TipoMovimiento = "Ajuste",
-                Comentario = "Disminución rápida desde detalle"
-            };
-
-            bool success = await _articuloService.CrearMovimientoAsync(movimiento);
-            if (success)
-            {
-                await RefrescarStock();
-            }
-            else
-            {
-                await DisplayAlert("Error", "No se pudo disminuir el stock.", "OK");
-            }
-        }
-
-        private async Task RefrescarStock()
-        {
-            var articulos = await _articuloService.GetArticulosAsync();
-            _currentArticulo = articulos.Find(a => a.Id == _currentArticulo.Id);
-
-            if (_currentArticulo != null)
-            {
-                StockEntry.Text = _currentArticulo.Stock.ToString();
-            }
-        }
     }
 }
