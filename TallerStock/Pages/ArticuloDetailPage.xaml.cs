@@ -43,70 +43,30 @@ namespace TallerStock.Pages
 
         private async void OnGuardarClicked(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(NombreEntry.Text) ||
-                string.IsNullOrWhiteSpace(StockEntry.Text) ||
-                string.IsNullOrWhiteSpace(CategoriaEntry.Text) ||
-                string.IsNullOrWhiteSpace(TamanoEntry.Text))
+            if (!int.TryParse(StockEntry.Text, out int stock))
             {
-                await DisplayAlert("Error", "Complete todos los campos.", "OK");
+                await DisplayAlert("Error", "Stock inválido", "OK");
                 return;
             }
 
-            if (!int.TryParse(StockEntry.Text, out int stock) || stock < 0)
+            var articulo = new Articulo
             {
-                await DisplayAlert("Error", "Stock inválido.", "OK");
-                return;
-            }
+                Nombre = NombreEntry.Text?.Trim(),
+                Stock = stock,
+                Categoria = CategoriaEntry.Text?.Trim(),
+                Tamano = TamanoEntry.Text?.Trim()
+            };
 
-            if (_currentArticulo == null)
+            var success = await _articuloService.AddArticuloAsync(articulo);
+
+            if (success)
             {
-                var existente = await _articuloService.GetArticuloPorNombreAsync(NombreEntry.Text);
-                if (existente != null)
-                {
-                    existente.Stock += stock;
-                    existente.Categoria = CategoriaEntry.Text;
-                    existente.Tamano = TamanoEntry.Text;
-                    if (await _articuloService.UpdateArticuloAsync(existente))
-                    {
-                        await DisplayAlert("Actualizado", "Se actualizó el stock y datos.", "OK");
-                        await Navigation.PopAsync();
-                        return;
-                    }
-                }
-                else
-                {
-                    _currentArticulo = new Articulo
-                    {
-                        Nombre = NombreEntry.Text,
-                        Stock = stock,
-                        Categoria = CategoriaEntry.Text,
-                        Tamano = TamanoEntry.Text
-                    };
-                    if (await _articuloService.AddArticuloAsync(_currentArticulo))
-                    {
-                        await DisplayAlert("Éxito", "Artículo agregado correctamente.", "OK");
-                        await Navigation.PopAsync();
-                        return;
-                    }
-                }
-                await DisplayAlert("Error", "No se pudo guardar el artículo.", "OK");
+                await DisplayAlert("Éxito", "Artículo guardado correctamente", "OK");
+                await Navigation.PopAsync();
             }
             else
             {
-                _currentArticulo.Nombre = NombreEntry.Text;
-                _currentArticulo.Stock = stock;
-                _currentArticulo.Categoria = CategoriaEntry.Text;
-                _currentArticulo.Tamano = TamanoEntry.Text;
-
-                if (await _articuloService.UpdateArticuloAsync(_currentArticulo))
-                {
-                    await DisplayAlert("Éxito", "Artículo actualizado correctamente.", "OK");
-                    await Navigation.PopAsync();
-                }
-                else
-                {
-                    await DisplayAlert("Error", "No se pudo actualizar el artículo.", "OK");
-                }
+                await DisplayAlert("Error", "No se pudo guardar el artículo", "OK");
             }
         }
 
